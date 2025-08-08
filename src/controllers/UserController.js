@@ -1,5 +1,6 @@
-const Joi = require('joi');
-const UserService = require('../services/UserService');
+const Joi = require("joi");
+const UserService = require("../services/UserService");
+const redis = require("../utils/redis");
 
 class UserController {
   async register(ctx) {
@@ -7,7 +8,9 @@ class UserController {
       username: Joi.string().min(3).max(50).required(),
       email: Joi.string().email().required(),
       password: Joi.string().min(6).required(),
-      phone: Joi.string().optional()
+      phone: Joi.string()
+        .pattern(/^1[3-9]\d{9}$/)
+        .optional(),
     });
 
     const { error, value } = schema.validate(ctx.request.body);
@@ -20,17 +23,36 @@ class UserController {
     try {
       const result = await UserService.register(value);
       ctx.status = 201;
-      ctx.body = { success: true, data: result };
+      ctx.body = { success: true, message: "注册成功，请前往邮箱验证" };
     } catch (err) {
       ctx.status = 400;
       ctx.body = { success: false, message: err.message };
     }
   }
 
+  async verifyEmail(ctx) {
+    const { token } = ctx.query;
+    if (!token) {
+      ctx.status = 400;
+      ctx.body = { success: false, message: "无效的验证链接" };
+      return;
+    }
+    const redisKey = `verify:email:${token}`;
+    const userId = await redis.get(redisKey);
+    if (!userId) {
+      ctx.status = 400;
+      ctx.body = { success: false, message: "链接已失效或无效" };
+      return;
+    }
+    await UserService.updateUserStatus(userId, "active");
+    await redis.del(redisKey);
+    ctx.body = { success: true, message: "邮箱验证成功，账户已激活" };
+  }
+
   async login(ctx) {
     const schema = Joi.object({
       email: Joi.string().email().required(),
-      password: Joi.string().required()
+      password: Joi.string().required(),
     });
 
     const { error, value } = schema.validate(ctx.request.body);
@@ -62,8 +84,11 @@ class UserController {
   async updateProfile(ctx) {
     const schema = Joi.object({
       username: Joi.string().min(3).max(50).optional(),
-      phone: Joi.string().optional(),
-      avatar: Joi.string().optional()
+      phone: Joi.string()
+        .pattern(/^1[3-9]\d{9}$/)
+        .message("手机号格式不正确")
+        .optional(),
+      avatar: Joi.string().uri({ allowRelative: true }).optional(),
     });
 
     const { error, value } = schema.validate(ctx.request.body);
@@ -82,21 +107,10 @@ class UserController {
     }
   }
 
-  async logout(ctx) {
-    try {
-      const sessionId = ctx.headers['x-session-id'];
-      await UserService.logout(ctx.state.user.id, sessionId);
-      ctx.body = { success: true, message: '退出登录成功' };
-    } catch (err) {
-      ctx.status = 500;
-      ctx.body = { success: false, message: err.message };
-    }
-  }
-
   async changePassword(ctx) {
     const schema = Joi.object({
       currentPassword: Joi.string().required(),
-      newPassword: Joi.string().min(6).required()
+      newPassword: Joi.string().min(6).required(),
     });
 
     const { error, value } = schema.validate(ctx.request.body);
@@ -107,62 +121,77 @@ class UserController {
     }
 
     try {
-      await UserService.changePassword(ctx.state.user.id, value.currentPassword, value.newPassword);
-      ctx.body = { success: true, message: '密码修改成功' };
+      await UserService.changePassword(
+        ctx.state.user.id,
+        value.currentPassword,
+        value.newPassword
+      );
+      ctx.body = { success: true, message: "密码修改成功" };
     } catch (err) {
       ctx.status = 400;
       ctx.body = { success: false, message: err.message };
     }
   }
 
-  async getActiveSessions(ctx) {
+  // 新增用户管理相关方法
+  async listUsers(ctx) {
+    const schema = Joi.object({
+      page: Joi.number().integer().min(1).default(1),
+      limit: Joi.number().integer().min(1).max(100).default(10),
+      status: Joi.string().valid("active", "inactive").optional(),
+      email: Joi.string().optional(),
+      createdAtStart: Joi.date().iso().optional(),
+      createdAtEnd: Joi.date().iso().optional(),
+    }).unknown(true); // 允许额外参数
+
+    const { error, value } = schema.validate(ctx.query);
+    if (error) {
+      ctx.status = 400;
+      ctx.body = { success: false, message: error.details[0].message };
+      return;
+    }
+
     try {
-      const sessions = await UserService.getActiveSessions(ctx.state.user.id);
-      ctx.body = { success: true, data: sessions };
+      const result = await UserService.listUsers(value);
+      ctx.body = { success: true, data: result };
     } catch (err) {
       ctx.status = 500;
       ctx.body = { success: false, message: err.message };
     }
   }
 
-  async logoutAllSessions(ctx) {
+  async getUserById(ctx) {
     try {
-      await UserService.deleteAllUserSessions(ctx.state.user.id);
-      ctx.body = { success: true, message: '所有设备已退出登录' };
-    } catch (err) {
-      ctx.status = 500;
-      ctx.body = { success: false, message: err.message };
-    }
-  }
-
-  async logoutSession(ctx) {
-    try {
-      const { sessionId } = ctx.params;
-      await UserService.deleteSession(sessionId);
-      ctx.body = { success: true, message: '指定设备已退出登录' };
-    } catch (err) {
-      ctx.status = 500;
-      ctx.body = { success: false, message: err.message };
-    }
-  }
-
-  async validateSession(ctx) {
-    try {
-      const { sessionId } = ctx.params;
-      const user = await UserService.validateSession(sessionId);
-      
-      if (!user) {
-        ctx.status = 401;
-        ctx.body = { success: false, message: 'Session无效或已过期' };
-        return;
-      }
-      
+      const { id } = ctx.params;
+      const user = await UserService.getUserById(id);
       ctx.body = { success: true, data: user };
     } catch (err) {
-      ctx.status = 500;
+      ctx.status = 404;
+      ctx.body = { success: false, message: err.message };
+    }
+  }
+
+  async disableUser(ctx) {
+    try {
+      const { id } = ctx.params;
+      await UserService.updateUserStatus(id, "inactive");
+      ctx.body = { success: true, message: "用户已禁用" };
+    } catch (err) {
+      ctx.status = 400;
+      ctx.body = { success: false, message: err.message };
+    }
+  }
+
+  async enableUser(ctx) {
+    try {
+      const { id } = ctx.params;
+      await UserService.updateUserStatus(id, "active");
+      ctx.body = { success: true, message: "用户已启用" };
+    } catch (err) {
+      ctx.status = 400;
       ctx.body = { success: false, message: err.message };
     }
   }
 }
 
-module.exports = new UserController(); 
+module.exports = new UserController();

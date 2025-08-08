@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # 安装依赖
-RUN npm ci --only=production
+RUN npm i --omit=dev
 
 # 复制源代码
 COPY . .
@@ -23,4 +23,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 # 启动命令
-CMD ["node", "src/app.js"] 
+CMD ["node", "src/server.js"] 

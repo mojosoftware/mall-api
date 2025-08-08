@@ -1,21 +1,26 @@
-const jwt = require('jsonwebtoken');
-const config = require('.././config');
+const { verifyToken } = require('../utils/jwt')
 
 module.exports = async (ctx, next) => {
-  const token = ctx.headers.authorization?.replace('Bearer ', '');
+  // 获取token
+  let token = ctx.header.authorization || ctx.cookies.get('token')
   
   if (!token) {
-    ctx.status = 401;
-    ctx.body = { success: false, message: '未提供认证令牌' };
-    return;
+    ctx.throw(401, 'No token detected in HTTP header "Authorization" or cookies')
   }
-  
+
+  // 如果token带有Bearer前缀，去掉该前缀
+  if (token.startsWith('Bearer ')) {
+    token = token.replace('Bearer ', '')
+  }
+
   try {
-    const decoded = jwt.verify(token, config.jwtSecret);
-    ctx.state.user = decoded;
-    await next();
+    // 验证token
+    const user = await verifyToken(token)
+    // 将用户信息挂载到ctx state中
+    ctx.state.user = user
   } catch (err) {
-    ctx.status = 401;
-    ctx.body = { success: false, message: '无效的认证令牌' };
+    ctx.throw(401, 'token已失效')
   }
-}; 
+
+  await next()
+}

@@ -13,8 +13,13 @@ if ! command -v docker-compose &> /dev/null; then
     exit 1
 fi
 
+
 # 创建必要的目录
 mkdir -p logs public/uploads
+
+# 自动添加按天切割日志的cron任务（如未存在）
+CRON_JOB="0 0 * * * cp $(pwd)/logs/combined.log $(pwd)/logs/\$(date +\%Y-\%m-\%d).log && > $(pwd)/logs/combined.log"
+crontab -l 2>/dev/null | grep -F "$CRON_JOB" >/dev/null || (crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab -
 
 # 构建并启动服务
 echo "📦 构建Docker镜像..."

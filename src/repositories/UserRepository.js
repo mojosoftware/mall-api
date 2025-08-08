@@ -32,23 +32,31 @@ class UserRepository {
   }
 
   async findAll(options = {}) {
-    const { page = 1, limit = 10, search, role, status } = options;
+    const { page = 1, limit = 10, role, status, email, createdAtStart, createdAtEnd } = options;
     const offset = (page - 1) * limit;
-    
+
     const where = {};
-    if (search) {
-      where[Op.or] = [
-        { username: { [Op.like]: `%${search}%` } },
-        { email: { [Op.like]: `%${search}%` } }
-      ];
-    }
-    
+
     if (role) {
       where.role = role;
     }
-    
+
     if (status) {
       where.status = status;
+    }
+
+    if (email) {
+      where.email = { [Op.like]: `%${email}%` };
+    }
+
+    if (createdAtStart || createdAtEnd) {
+      where.createdAt = {};
+      if (createdAtStart) {
+        where.createdAt[Op.gte] = new Date(createdAtStart);
+      }
+      if (createdAtEnd) {
+        where.createdAt[Op.lte] = new Date(createdAtEnd);
+      }
     }
 
     return await User.findAndCountAll({
