@@ -2,42 +2,30 @@ const { signToken } = require("../utils/jwt");
 const UserRepository = require("../repositories/UserRepository");
 const logger = require("../utils/logger");
 const redis = require("../utils/redis");
+const { rateLimitMail } = require("../utils/mailer");
+
 class UserService {
   async register(userData) {
     const { email, username } = userData;
     // 检查邮箱和用户名是否已存在
     const existingEmail = await UserRepository.findByEmail(email);
-    if (existingEmail) {
+
+    if (existingEmail?.status === "active" || existingEmail?.lastLoginAt !== null) {
       throw new Error("邮箱已被注册");
     }
     const existingUsername = await UserRepository.findByUsername(username);
-    if (existingUsername) {
+    if (existingUsername?.status === "active"  || existingUsername.lastLoginAt !== null) {
       throw new Error("用户名已被使用");
     }
+    // 检查邮箱发送频率
+    await rateLimitMail(email);
     // 注册用户默认未激活
-    const user = await UserRepository.create({
-      ...userData,
-      status: "inactive",
-    });
-
-    // 生成验证token并存入redis，24小时有效
-    const verifyToken = Buffer.from(`${user.id}:${Date.now()}`).toString(
-      "base64"
-    );
-    const redisKey = `verify:email:${verifyToken}`;
-    await redis.set(redisKey, user.id, "EX", 24 * 60 * 60);
-
-    // 生成验证链接
-    const verifyUrl = `${
-      process.env.BASE_URL || "http://localhost:3000"
-    }/api/users/verify-email?token=${verifyToken}`;
-    const { sendMail } = require("../utils/mailer");
-    await sendMail({
-      to: user.email,
-      subject: "邮箱验证",
-      html: `<p>欢迎注册，请点击下方链接完成邮箱验证（24小时内有效）：</p><p><a href="${verifyUrl}">${verifyUrl}</a></p>`,
-    });
-
+    if (!existingEmail && !existingUsername) {
+      await UserRepository.create({
+        ...userData,
+        status: "inactive",
+      });
+    }
     // return this.generateUserResponse(user);
   }
 
@@ -124,6 +112,7 @@ class UserService {
     return this.formatUserData(user);
   }
 
+
   async updateUserStatus(id, status) {
     const user = await UserRepository.findById(id);
     if (!user) {
@@ -137,6 +126,14 @@ class UserService {
     await UserRepository.update(id, { status });
     logger.info(`用户 ${id} 状态更新为 ${status}`);
     return true;
+  }
+
+  async updateUserStatusByEmail(email, status) {
+    const user = await UserRepository.findByEmail(email);
+    if (!user) {
+      throw new Error("用户不存在");
+    }
+    return this.updateUserStatus(user.id, status);
   }
 
   generateUserResponse(user) {

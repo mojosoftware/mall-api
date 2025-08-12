@@ -2,6 +2,7 @@ const Joi = require("joi");
 const UserService = require("../services/UserService");
 const redis = require("../utils/redis");
 
+
 class UserController {
   async register(ctx) {
     const schema = Joi.object({
@@ -21,7 +22,7 @@ class UserController {
     }
 
     try {
-      const result = await UserService.register(value);
+      await UserService.register(value);
       ctx.status = 201;
       ctx.body = { success: true, message: "注册成功，请前往邮箱验证" };
     } catch (err) {
@@ -38,14 +39,15 @@ class UserController {
       return;
     }
     const redisKey = `verify:email:${token}`;
-    const userId = await redis.get(redisKey);
-    if (!userId) {
+    const userEmail = await redis.get(redisKey);
+    if (!userEmail) {
       ctx.status = 400;
       ctx.body = { success: false, message: "链接已失效或无效" };
       return;
     }
-    await UserService.updateUserStatus(userId, "active");
-    await redis.del(redisKey);
+    
+    await UserService.updateUserStatusByEmail(userEmail, "active");
+    
     ctx.body = { success: true, message: "邮箱验证成功，账户已激活" };
   }
 
@@ -86,7 +88,6 @@ class UserController {
       username: Joi.string().min(3).max(50).optional(),
       phone: Joi.string()
         .pattern(/^1[3-9]\d{9}$/)
-        .message("手机号格式不正确")
         .optional(),
       avatar: Joi.string().uri({ allowRelative: true }).optional(),
     });

@@ -19,7 +19,9 @@ router.post(
     }
     ctx.body = {
       success: true,
-      url: `/uploads/${ctx.file.filename}`,
+      data: {
+        url: `/api/uploads/${ctx.file.filename}`,
+      }
     };
   }
 );

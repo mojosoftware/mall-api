@@ -2,14 +2,19 @@ const Router = require("@koa/router");
 const UserController = require("../controllers/UserController");
 const authMiddleware = require("../middleware/auth");
 const adminAuth = require("../middleware/adminAuth");
+const rateLimiter = require("../middleware/rateLimiter");
 
 const router = new Router({
   prefix: "/api/users",
 });
 
 // 公开路由
-router.post("/register", UserController.register);
-router.post("/login", UserController.login);
+router.post(
+  "/register",
+  rateLimiter({ points: 5, duration: 60, keyPrefix: "register_ip" }),
+  UserController.register
+);
+router.post("/login", rateLimiter({ points: 5, duration: 60, keyPrefix: "login_ip" }), UserController.login);
 router.get("/verify-email", UserController.verifyEmail);
 
 // 需要认证的路由

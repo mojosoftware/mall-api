@@ -15,9 +15,10 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const ext = path.extname(file.originalname);
-    const basename = path.basename(file.originalname, ext);
+    // const basename = path.basename(file.originalname, ext);
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, `${basename}-${uniqueSuffix}${ext}`);
+    // 对中文等特殊字符进行 URL 编码
+    cb(null, `${uniqueSuffix}${ext}`);
   },
 });
 
