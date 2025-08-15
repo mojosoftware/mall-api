@@ -8,6 +8,7 @@
     "dev": "nodemon src/server.js",
     "test": "jest",
     "init:testdata": "node src/scripts/initTestData.js",
+    "init:rbac": "node src/scripts/initRbacData.js",
     "deploy": "./scripts/deploy.sh",
     "deploy:dev": "./scripts/deploy.sh dev",
     "deploy:tools": "./scripts/deploy.sh tools",

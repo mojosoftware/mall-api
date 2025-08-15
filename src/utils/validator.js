@@ -226,6 +226,82 @@ const uploadSchemas = {
   })
 };
 
+// RBAC权限验证规则
+const rbacSchemas = {
+  // 角色相关
+  createRole: Joi.object({
+    name: Joi.string().min(1).max(50).required(),
+    code: Joi.string().min(1).max(50).required(),
+    description: Joi.string().max(500).optional(),
+    status: Joi.string().valid('active', 'inactive').optional(),
+    sort: Joi.number().integer().optional()
+  }),
+  
+  updateRole: Joi.object({
+    name: Joi.string().min(1).max(50).optional(),
+    code: Joi.string().min(1).max(50).optional(),
+    description: Joi.string().max(500).optional(),
+    status: Joi.string().valid('active', 'inactive').optional(),
+    sort: Joi.number().integer().optional()
+  }),
+  
+  assignPermissions: Joi.object({
+    permissionIds: Joi.array().items(Joi.number().integer().positive()).required()
+  }),
+  
+  assignRoles: Joi.object({
+    roleIds: Joi.array().items(Joi.number().integer().positive()).required()
+  }),
+  
+  // 权限相关
+  createPermission: Joi.object({
+    name: Joi.string().min(1).max(100).required(),
+    code: Joi.string().min(1).max(100).required(),
+    type: Joi.string().valid('menu', 'button', 'api').required(),
+    parentId: Joi.number().integer().positive().optional(),
+    path: Joi.string().max(200).optional(),
+    component: Joi.string().max(200).optional(),
+    icon: Joi.string().max(100).optional(),
+    method: Joi.string().valid('GET', 'POST', 'PUT', 'DELETE', 'PATCH').optional(),
+    url: Joi.string().max(200).optional(),
+    description: Joi.string().max(500).optional(),
+    status: Joi.string().valid('active', 'inactive').optional(),
+    sort: Joi.number().integer().optional()
+  }),
+  
+  updatePermission: Joi.object({
+    name: Joi.string().min(1).max(100).optional(),
+    code: Joi.string().min(1).max(100).optional(),
+    type: Joi.string().valid('menu', 'button', 'api').optional(),
+    parentId: Joi.number().integer().positive().optional(),
+    path: Joi.string().max(200).optional(),
+    component: Joi.string().max(200).optional(),
+    icon: Joi.string().max(100).optional(),
+    method: Joi.string().valid('GET', 'POST', 'PUT', 'DELETE', 'PATCH').optional(),
+    url: Joi.string().max(200).optional(),
+    description: Joi.string().max(500).optional(),
+    status: Joi.string().valid('active', 'inactive').optional(),
+    sort: Joi.number().integer().optional()
+  }),
+  
+  // 查询验证
+  queryRoles: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+    name: Joi.string().optional(),
+    status: Joi.string().valid('active', 'inactive').optional(),
+    isSystem: Joi.string().valid('true', 'false').optional()
+  }).unknown(true),
+  
+  queryPermissions: Joi.object({
+    page: Joi.number().integer().min(1).optional(),
+    limit: Joi.number().integer().min(1).max(100).optional(),
+    name: Joi.string().optional(),
+    type: Joi.string().valid('menu', 'button', 'api').optional(),
+    status: Joi.string().valid('active', 'inactive').optional(),
+    parentId: Joi.number().integer().positive().optional()
+  }).unknown(true)
+};
 module.exports = {
   validateSchema,
   commonSchemas,
@@ -235,5 +311,6 @@ module.exports = {
   cartSchemas,
   orderSchemas,
   adminSchemas,
-  uploadSchemas
+  uploadSchemas,
+  rbacSchemas
 };

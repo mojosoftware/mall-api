@@ -15,6 +15,8 @@ const cartRoutes = require("./routes/cart");
 const orderRoutes = require("./routes/order");
 const adminRoutes = require("./routes/admin");
 const uploadRoutes = require("./routes/upload");
+const roleRoutes = require("./routes/role");
+const permissionRoutes = require("./routes/permission");
 
 const app = new Koa();
 
@@ -84,6 +86,12 @@ app.use(orderRoutes.allowedMethods());
 
 app.use(adminRoutes.routes());
 app.use(adminRoutes.allowedMethods());
+
+app.use(roleRoutes.routes());
+app.use(roleRoutes.allowedMethods());
+
+app.use(permissionRoutes.routes());
+app.use(permissionRoutes.allowedMethods());
 
 // 404处理
 app.use(async (ctx) => {
