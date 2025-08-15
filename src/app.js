@@ -87,6 +87,18 @@ app.use(adminRoutes.allowedMethods());
 
 // 404处理
 app.use(async (ctx) => {
+  // 健康检查接口
+  if (ctx.path === '/health') {
+    ctx.status = 200;
+    ctx.body = {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: process.env.npm_package_version || '1.0.0'
+    };
+    return;
+  }
+  
   logger.warn('404 - 路由未找到', {
     method: ctx.method,
     url: ctx.url,

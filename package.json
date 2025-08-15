@@ -8,10 +8,17 @@
     "dev": "nodemon src/server.js",
     "test": "jest",
     "init:testdata": "node src/scripts/initTestData.js",
+    "deploy": "./scripts/deploy.sh",
+    "deploy:dev": "./scripts/deploy.sh dev",
+    "deploy:tools": "./scripts/deploy.sh tools",
     "docker:build": "docker-compose build",
-    "docker:up": "docker compose up -d",
+    "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f"
+    "docker:logs": "docker-compose logs -f",
+    "docker:restart": "docker-compose restart",
+    "docker:status": "docker-compose ps",
+    "docker:backup": "./scripts/deploy.sh backup",
+    "docker:clean": "./scripts/deploy.sh clean"
   },
   "dependencies": {
     "@koa/multer": "^4.0.0",
