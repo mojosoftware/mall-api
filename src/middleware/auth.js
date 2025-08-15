@@ -66,3 +66,4 @@ module.exports = async (ctx, next) => {
       Response.error(ctx, '认证过程中发生错误', 500, 500);
     }
   }
+}
