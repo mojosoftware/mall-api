@@ -39,9 +39,21 @@ module.exports = {
 
   // 文件上传配置
   upload: {
-    maxSize: 5 * 1024 * 1024, // 5MB
-    allowedTypes: ["image/jpeg", "image/png", "image/gif"],
+    maxSize: 10 * 1024 * 1024, // 10MB (默认)
     uploadPath: "public/uploads/",
+    // 图片压缩配置
+    imageCompression: {
+      quality: 80,
+      maxWidth: 1200,
+      maxHeight: 1200,
+      progressive: true
+    },
+    // 清理配置
+    cleanup: {
+      enabled: true,
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30天
+      schedule: '0 2 * * *' // 每天凌晨2点
+    }
   },
 
   // 分页配置

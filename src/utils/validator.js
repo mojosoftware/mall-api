@@ -213,8 +213,16 @@ const adminSchemas = {
 
 // 文件上传验证规则
 const uploadSchemas = {
-  file: Joi.object({
+  singleFile: Joi.object({
     file: Joi.any().required()
+  }),
+  
+  multipleFiles: Joi.object({
+    files: Joi.array().items(Joi.any()).min(1).max(5).required()
+  }),
+  
+  deleteFile: Joi.object({
+    filename: Joi.string().required()
   })
 };
 
