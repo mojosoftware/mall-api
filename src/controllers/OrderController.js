@@ -1,5 +1,6 @@
 const Joi = require('joi');
 const OrderService = require('../services/OrderService');
+const Response = require('../utils/response');
 
 class OrderController {
   async getOrders(ctx) {
@@ -12,19 +13,9 @@ class OrderController {
       };
       
       const result = await OrderService.getOrdersByUserId(ctx.state.user.id, options);
-      ctx.body = {
-        success: true,
-        data: {
-          orders: result.rows,
-          total: result.count,
-          page: options.page,
-          limit: options.limit,
-          totalPages: Math.ceil(result.count / options.limit)
-        }
-      };
+      Response.page(ctx, result.rows, result.count, options.page, options.limit, "获取订单列表成功");
     } catch (err) {
-      ctx.status = 500;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 500);
     }
   }
 
@@ -32,10 +23,9 @@ class OrderController {
     try {
       const { id } = ctx.params;
       const order = await OrderService.getOrderById(parseInt(id), ctx.state.user.id);
-      ctx.body = { success: true, data: order };
+      Response.success(ctx, order, "获取订单详情成功");
     } catch (err) {
-      ctx.status = 404;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 404);
     }
   }
 
@@ -61,18 +51,15 @@ class OrderController {
 
     const { error, value } = schema.validate(ctx.request.body);
     if (error) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: error.details[0].message };
+      Response.error(ctx, error.details[0].message, -1, 400);
       return;
     }
 
     try {
       const order = await OrderService.createOrder(ctx.state.user.id, value);
-      ctx.status = 201;
-      ctx.body = { success: true, data: order };
+      Response.success(ctx, order, "创建订单成功");
     } catch (err) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 400);
     }
   }
 
@@ -83,18 +70,16 @@ class OrderController {
 
     const { error, value } = schema.validate(ctx.request.body);
     if (error) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: error.details[0].message };
+      Response.error(ctx, error.details[0].message, -1, 400);
       return;
     }
 
     try {
       const { id } = ctx.params;
       const order = await OrderService.updateOrderStatus(parseInt(id), value.status);
-      ctx.body = { success: true, data: order };
+      Response.success(ctx, order, "更新订单状态成功");
     } catch (err) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 400);
     }
   }
 }

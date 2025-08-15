@@ -1,5 +1,6 @@
 const { RateLimiterRedis } = require('rate-limiter-flexible');
 const redis = require('../utils/redis');
+const Response = require('../utils/response');
 
 module.exports = ({
   points = 10,
@@ -18,11 +19,7 @@ module.exports = ({
       await rateLimiter.consume(ctx.ip);
       await next();
     } catch (rejRes) {
-      ctx.status = 429;
-      ctx.body = { 
-        success: false, 
-        message: '请求过于频繁，请稍后再试' 
-      };
+      Response.error(ctx, '请求过于频繁，请稍后再试', -1, 429);
     }
   }
 

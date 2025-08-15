@@ -1,15 +1,15 @@
 const Joi = require('joi');
 const CategoryService = require('../services/CategoryService');
+const Response = require('../utils/response');
 
 class CategoryController {
   async getCategories(ctx) {
     try {
       const { status } = ctx.query;
       const categories = await CategoryService.getCategories({ status });
-      ctx.body = { success: true, data: categories };
+      Response.success(ctx, categories, "获取分类列表成功");
     } catch (err) {
-      ctx.status = 500;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 500);
     }
   }
 
@@ -17,10 +17,9 @@ class CategoryController {
     try {
       const { id } = ctx.params;
       const category = await CategoryService.getCategoryById(parseInt(id));
-      ctx.body = { success: true, data: category };
+      Response.success(ctx, category, "获取分类详情成功");
     } catch (err) {
-      ctx.status = 404;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 404);
     }
   }
 
@@ -35,18 +34,15 @@ class CategoryController {
 
     const { error, value } = schema.validate(ctx.request.body);
     if (error) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: error.details[0].message };
+      Response.error(ctx, error.details[0].message, -1, 400);
       return;
     }
 
     try {
       const category = await CategoryService.createCategory(value);
-      ctx.status = 201;
-      ctx.body = { success: true, data: category };
+      Response.success(ctx, category, "创建分类成功");
     } catch (err) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 400);
     }
   }
 
@@ -61,18 +57,16 @@ class CategoryController {
 
     const { error, value } = schema.validate(ctx.request.body);
     if (error) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: error.details[0].message };
+      Response.error(ctx, error.details[0].message, -1, 400);
       return;
     }
 
     try {
       const { id } = ctx.params;
       const category = await CategoryService.updateCategory(parseInt(id), value);
-      ctx.body = { success: true, data: category };
+      Response.success(ctx, category, "更新分类成功");
     } catch (err) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 400);
     }
   }
 
@@ -80,10 +74,9 @@ class CategoryController {
     try {
       const { id } = ctx.params;
       await CategoryService.deleteCategory(parseInt(id));
-      ctx.body = { success: true, message: '分类删除成功' };
+      Response.success(ctx, null, "分类删除成功");
     } catch (err) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 400);
     }
   }
 
@@ -91,10 +84,9 @@ class CategoryController {
     try {
       const { id } = ctx.params;
       const category = await CategoryService.getCategoryWithProducts(parseInt(id));
-      ctx.body = { success: true, data: category };
+      Response.success(ctx, category, "获取分类及商品成功");
     } catch (err) {
-      ctx.status = 404;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 404);
     }
   }
 }

@@ -1,6 +1,7 @@
 const Joi = require("joi");
 const UserService = require("../services/UserService");
 const redis = require("../utils/redis");
+const Response = require("../utils/response");
 
 
 class UserController {
@@ -16,39 +17,34 @@ class UserController {
 
     const { error, value } = schema.validate(ctx.request.body);
     if (error) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: error.details[0].message };
+      Response.error(ctx, error.details[0].message, -1, 400);
       return;
     }
 
     try {
       await UserService.register(value);
-      ctx.status = 201;
-      ctx.body = { success: true, message: "注册成功，请前往邮箱验证" };
+      Response.success(ctx, null, "注册成功，请前往邮箱验证");
     } catch (err) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 400);
     }
   }
 
   async verifyEmail(ctx) {
     const { token } = ctx.query;
     if (!token) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: "无效的验证链接" };
+      Response.error(ctx, "无效的验证链接", -1, 400);
       return;
     }
     const redisKey = `verify:email:${token}`;
     const userEmail = await redis.get(redisKey);
     if (!userEmail) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: "链接已失效或无效" };
+      Response.error(ctx, "链接已失效或无效", -1, 400);
       return;
     }
     
     await UserService.updateUserStatusByEmail(userEmail, "active");
     
-    ctx.body = { success: true, message: "邮箱验证成功，账户已激活" };
+    Response.success(ctx, null, "邮箱验证成功，账户已激活");
   }
 
   async login(ctx) {
@@ -59,27 +55,24 @@ class UserController {
 
     const { error, value } = schema.validate(ctx.request.body);
     if (error) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: error.details[0].message };
+      Response.error(ctx, error.details[0].message, -1, 400);
       return;
     }
 
     try {
       const result = await UserService.login(value.email, value.password);
-      ctx.body = { success: true, data: result };
+      Response.success(ctx, result, "登录成功");
     } catch (err) {
-      ctx.status = 401;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 401);
     }
   }
 
   async getProfile(ctx) {
     try {
       const result = await UserService.getProfile(ctx.state.user.id);
-      ctx.body = { success: true, data: result };
+      Response.success(ctx, result, "获取用户信息成功");
     } catch (err) {
-      ctx.status = 404;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 404);
     }
   }
 
@@ -94,17 +87,15 @@ class UserController {
 
     const { error, value } = schema.validate(ctx.request.body);
     if (error) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: error.details[0].message };
+      Response.error(ctx, error.details[0].message, -1, 400);
       return;
     }
 
     try {
       const result = await UserService.updateProfile(ctx.state.user.id, value);
-      ctx.body = { success: true, data: result };
+      Response.success(ctx, result, "更新用户信息成功");
     } catch (err) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 400);
     }
   }
 
@@ -116,8 +107,7 @@ class UserController {
 
     const { error, value } = schema.validate(ctx.request.body);
     if (error) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: error.details[0].message };
+      Response.error(ctx, error.details[0].message, -1, 400);
       return;
     }
 
@@ -127,10 +117,9 @@ class UserController {
         value.currentPassword,
         value.newPassword
       );
-      ctx.body = { success: true, message: "密码修改成功" };
+      Response.success(ctx, null, "密码修改成功");
     } catch (err) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 400);
     }
   }
 
@@ -147,17 +136,15 @@ class UserController {
 
     const { error, value } = schema.validate(ctx.query);
     if (error) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: error.details[0].message };
+      Response.error(ctx, error.details[0].message, -1, 400);
       return;
     }
 
     try {
       const result = await UserService.listUsers(value);
-      ctx.body = { success: true, data: result };
+      Response.page(ctx, result.list, result.total, value.page, value.limit, "获取用户列表成功");
     } catch (err) {
-      ctx.status = 500;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 500);
     }
   }
 
@@ -165,10 +152,9 @@ class UserController {
     try {
       const { id } = ctx.params;
       const user = await UserService.getUserById(id);
-      ctx.body = { success: true, data: user };
+      Response.success(ctx, user, "获取用户信息成功");
     } catch (err) {
-      ctx.status = 404;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 404);
     }
   }
 
@@ -176,10 +162,9 @@ class UserController {
     try {
       const { id } = ctx.params;
       await UserService.updateUserStatus(id, "inactive");
-      ctx.body = { success: true, message: "用户已禁用" };
+      Response.success(ctx, null, "用户已禁用");
     } catch (err) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 400);
     }
   }
 
@@ -187,10 +172,9 @@ class UserController {
     try {
       const { id } = ctx.params;
       await UserService.updateUserStatus(id, "active");
-      ctx.body = { success: true, message: "用户已启用" };
+      Response.success(ctx, null, "用户已启用");
     } catch (err) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 400);
     }
   }
 }

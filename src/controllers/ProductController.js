@@ -1,5 +1,6 @@
 const Joi = require('joi');
 const ProductService = require('../services/ProductService');
+const Response = require('../utils/response');
 
 class ProductController {
   async getProducts(ctx) {
@@ -14,19 +15,9 @@ class ProductController {
       };
       
       const result = await ProductService.getProducts(options);
-      ctx.body = {
-        success: true,
-        data: {
-          products: result.rows,
-          total: result.count,
-          page: options.page,
-          limit: options.limit,
-          totalPages: Math.ceil(result.count / options.limit)
-        }
-      };
+      Response.page(ctx, result.rows, result.count, options.page, options.limit, "获取商品列表成功");
     } catch (err) {
-      ctx.status = 500;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 500);
     }
   }
 
@@ -34,10 +25,9 @@ class ProductController {
     try {
       const { id } = ctx.params;
       const product = await ProductService.getProductById(parseInt(id));
-      ctx.body = { success: true, data: product };
+      Response.success(ctx, product, "获取商品详情成功");
     } catch (err) {
-      ctx.status = 404;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 404);
     }
   }
 
@@ -55,18 +45,15 @@ class ProductController {
 
     const { error, value } = schema.validate(ctx.request.body);
     if (error) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: error.details[0].message };
+      Response.error(ctx, error.details[0].message, -1, 400);
       return;
     }
 
     try {
       const product = await ProductService.createProduct(value);
-      ctx.status = 201;
-      ctx.body = { success: true, data: product };
+      Response.success(ctx, product, "创建商品成功");
     } catch (err) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 400);
     }
   }
 
@@ -84,18 +71,16 @@ class ProductController {
 
     const { error, value } = schema.validate(ctx.request.body);
     if (error) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: error.details[0].message };
+      Response.error(ctx, error.details[0].message, -1, 400);
       return;
     }
 
     try {
       const { id } = ctx.params;
       const product = await ProductService.updateProduct(parseInt(id), value);
-      ctx.body = { success: true, data: product };
+      Response.success(ctx, product, "更新商品成功");
     } catch (err) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 400);
     }
   }
 
@@ -103,10 +88,9 @@ class ProductController {
     try {
       const { id } = ctx.params;
       await ProductService.deleteProduct(parseInt(id));
-      ctx.body = { success: true, message: '商品删除成功' };
+      Response.success(ctx, null, "商品删除成功");
     } catch (err) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 400);
     }
   }
 
@@ -114,10 +98,9 @@ class ProductController {
     try {
       const { limit } = ctx.query;
       const products = await ProductService.getHotProducts(parseInt(limit) || 10);
-      ctx.body = { success: true, data: products };
+      Response.success(ctx, products, "获取热门商品成功");
     } catch (err) {
-      ctx.status = 500;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 500);
     }
   }
 }

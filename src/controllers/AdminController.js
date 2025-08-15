@@ -1,6 +1,7 @@
 const UserRepository = require('../repositories/UserRepository');
 const OrderRepository = require('../repositories/OrderRepository');
 const ProductRepository = require('../repositories/ProductRepository');
+const Response = require('../utils/response');
 
 class AdminController {
   async getUsers(ctx) {
@@ -13,19 +14,9 @@ class AdminController {
       };
       
       const result = await UserRepository.findAll(options);
-      ctx.body = {
-        success: true,
-        data: {
-          users: result.rows,
-          total: result.count,
-          page: options.page,
-          limit: options.limit,
-          totalPages: Math.ceil(result.count / options.limit)
-        }
-      };
+      Response.page(ctx, result.rows, result.count, options.page, options.limit, "获取用户列表成功");
     } catch (err) {
-      ctx.status = 500;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 500);
     }
   }
 
@@ -35,22 +26,19 @@ class AdminController {
       const { status } = ctx.request.body;
       
       if (!['active', 'inactive'].includes(status)) {
-        ctx.status = 400;
-        ctx.body = { success: false, message: '状态值无效' };
+        Response.error(ctx, "状态值无效", -1, 400);
         return;
       }
       
       const user = await UserRepository.update(parseInt(id), { status });
       if (!user) {
-        ctx.status = 404;
-        ctx.body = { success: false, message: '用户不存在' };
+        Response.error(ctx, "用户不存在", -1, 404);
         return;
       }
       
-      ctx.body = { success: true, data: user };
+      Response.success(ctx, user, "更新用户状态成功");
     } catch (err) {
-      ctx.status = 500;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 500);
     }
   }
 
@@ -65,19 +53,9 @@ class AdminController {
       };
       
       const result = await OrderRepository.findAll(options);
-      ctx.body = {
-        success: true,
-        data: {
-          orders: result.rows,
-          total: result.count,
-          page: options.page,
-          limit: options.limit,
-          totalPages: Math.ceil(result.count / options.limit)
-        }
-      };
+      Response.page(ctx, result.rows, result.count, options.page, options.limit, "获取订单列表成功");
     } catch (err) {
-      ctx.status = 500;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 500);
     }
   }
 
@@ -87,22 +65,19 @@ class AdminController {
       const { status } = ctx.request.body;
       
       if (!['pending', 'paid', 'shipped', 'delivered', 'cancelled'].includes(status)) {
-        ctx.status = 400;
-        ctx.body = { success: false, message: '状态值无效' };
+        Response.error(ctx, "状态值无效", -1, 400);
         return;
       }
       
       const order = await OrderRepository.updateStatus(parseInt(id), status);
       if (!order) {
-        ctx.status = 404;
-        ctx.body = { success: false, message: '订单不存在' };
+        Response.error(ctx, "订单不存在", -1, 404);
         return;
       }
       
-      ctx.body = { success: true, data: order };
+      Response.success(ctx, order, "更新订单状态成功");
     } catch (err) {
-      ctx.status = 500;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 500);
     }
   }
 
@@ -123,18 +98,14 @@ class AdminController {
         }
       });
       
-      ctx.body = {
-        success: true,
-        data: {
-          userCount,
-          productCount,
-          orderCount,
-          todayOrderCount
-        }
-      };
+      Response.success(ctx, {
+        userCount,
+        productCount,
+        orderCount,
+        todayOrderCount
+      }, "获取统计信息成功");
     } catch (err) {
-      ctx.status = 500;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 500);
     }
   }
 }

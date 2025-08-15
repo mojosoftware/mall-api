@@ -1,14 +1,14 @@
 const Joi = require('joi');
 const CartService = require('../services/CartService');
+const Response = require('../utils/response');
 
 class CartController {
   async getCart(ctx) {
     try {
       const cart = await CartService.getCart(ctx.state.user.id);
-      ctx.body = { success: true, data: cart };
+      Response.success(ctx, cart, "获取购物车成功");
     } catch (err) {
-      ctx.status = 500;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 500);
     }
   }
 
@@ -20,8 +20,7 @@ class CartController {
 
     const { error, value } = schema.validate(ctx.request.body);
     if (error) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: error.details[0].message };
+      Response.error(ctx, error.details[0].message, -1, 400);
       return;
     }
 
@@ -31,10 +30,9 @@ class CartController {
         value.productId,
         value.quantity
       );
-      ctx.body = { success: true, data: cartItem };
+      Response.success(ctx, cartItem, "添加到购物车成功");
     } catch (err) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 400);
     }
   }
 
@@ -45,8 +43,7 @@ class CartController {
 
     const { error, value } = schema.validate(ctx.request.body);
     if (error) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: error.details[0].message };
+      Response.error(ctx, error.details[0].message, -1, 400);
       return;
     }
 
@@ -57,10 +54,9 @@ class CartController {
         parseInt(itemId),
         value.quantity
       );
-      ctx.body = { success: true, data: cartItem };
+      Response.success(ctx, cartItem, "更新购物车成功");
     } catch (err) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 400);
     }
   }
 
@@ -68,32 +64,29 @@ class CartController {
     try {
       const { itemId } = ctx.params;
       await CartService.removeFromCart(ctx.state.user.id, parseInt(itemId));
-      ctx.body = { success: true, message: '商品已从购物车移除' };
+      Response.success(ctx, null, "商品已从购物车移除");
     } catch (err) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 400);
     }
   }
 
   async clearCart(ctx) {
     try {
       await CartService.clearCart(ctx.state.user.id);
-      ctx.body = { success: true, message: '购物车已清空' };
+      Response.success(ctx, null, "购物车已清空");
     } catch (err) {
-      ctx.status = 500;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 500);
     }
   }
 
   async getCartCount(ctx) {
     try {
       const count = await CartService.getCartCount(ctx.state.user.id);
-      ctx.body = { success: true, data: { count } };
+      Response.success(ctx, { count }, "获取购物车数量成功");
     } catch (err) {
-      ctx.status = 500;
-      ctx.body = { success: false, message: err.message };
+      Response.error(ctx, err.message, -1, 500);
     }
   }
 }
 
-module.exports = new CartController(); 
+module.exports = new CartController();

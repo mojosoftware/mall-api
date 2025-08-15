@@ -1,4 +1,5 @@
 const logger = require('../utils/logger');
+const Response = require('../utils/response');
 
 module.exports = async (ctx, next) => {
   try {
@@ -6,11 +7,14 @@ module.exports = async (ctx, next) => {
   } catch (err) {
     logger.error('API错误:', err);
     
-    ctx.status = err.status || 500;
-    ctx.body = {
-      success: false,
-      message: err.message || '服务器内部错误',
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-    };
+    const status = err.status || 500;
+    const message = err.message || '服务器内部错误';
+    
+    Response.error(ctx, message, -1, status);
+    
+    // 开发环境下添加错误堆栈信息
+    if (process.env.NODE_ENV === 'development') {
+      ctx.body.stack = err.stack;
+    }
   }
 }; 

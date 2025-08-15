@@ -1,6 +1,7 @@
 const Router = require("@koa/router");
 const { upload, compressImage } = require("../middleware/upload");
 const authMiddleware = require("../middleware/auth");
+const Response = require("../utils/response");
 
 const router = new Router();
 
@@ -13,16 +14,12 @@ router.post(
   async (ctx) => {
     // multer 挂载单文件到 ctx.file
     if (!ctx.file) {
-      ctx.status = 400;
-      ctx.body = { success: false, message: "未检测到上传文件" };
+      Response.error(ctx, "未检测到上传文件", -1, 400);
       return;
     }
-    ctx.body = {
-      success: true,
-      data: {
-        url: `/api/uploads/${ctx.file.filename}`,
-      }
-    };
+    Response.success(ctx, {
+      url: `/api/uploads/${ctx.file.filename}`,
+    }, "文件上传成功");
   }
 );
 module.exports = router;
