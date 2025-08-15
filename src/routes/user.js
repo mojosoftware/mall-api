@@ -21,6 +21,7 @@ router.post("/login",
   validateSchema(userSchemas.login),
   UserController.login
 );
+router.post("/logout", authMiddleware, UserController.logout);
 router.get("/verify-email", UserController.verifyEmail);
 
 // 需要认证的路由

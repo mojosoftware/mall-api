@@ -2,6 +2,7 @@ const { verifyToken } = require('../utils/jwt');
 const Response = require('../utils/response');
 const logger = require('../utils/logger');
 const UserRepository = require('../repositories/UserRepository');
+const redis = require('../utils/redis');
 
 module.exports = async (ctx, next) => {
   try {
@@ -27,25 +28,38 @@ module.exports = async (ctx, next) => {
     }
 
     // 验证token
-    const user = await verifyToken(token);
+    const decoded = verifyToken(token);
     
-    if (!user) {
+    if (!decoded) {
       logger.logAuth(ctx, 'JWT令牌验证失败', 'warn');
       Response.error(ctx, '认证令牌无效或已过期', 401, 401);
       return;
     }
 
+    // 检查令牌黑名单
+    try {
+      const isBlacklisted = await redis.exists(`blacklist:${decoded.jti || 'unknown'}`);
+      if (isBlacklisted) {
+        logger.logAuth(ctx, `令牌已被列入黑名单: ${decoded.jti}`, 'warn');
+        Response.error(ctx, '认证令牌已失效', 401, 401);
+        return;
+      }
+    } catch (redisError) {
+      logger.warn('黑名单检查失败', { error: redisError.message });
+      // Redis失败不阻止验证流程
+    }
+
     // 验证用户在数据库中的状态
     try {
-      const dbUser = await UserRepository.findById(user.id);
+      const dbUser = await UserRepository.findById(decoded.id);
       if (!dbUser) {
-        logger.logAuth(ctx, `用户不存在: ${user.id}`, 'warn');
+        logger.logAuth(ctx, `用户不存在: ${decoded.id}`, 'warn');
         Response.error(ctx, '用户不存在，请重新登录', 401, 401);
         return;
       }
 
       if (dbUser.status !== 'active') {
-        logger.logAuth(ctx, `用户状态异常: ${user.id} - 状态: ${dbUser.status}`, 'warn');
+        logger.logAuth(ctx, `用户状态异常: ${decoded.id} - 状态: ${dbUser.status}`, 'warn');
         Response.error(ctx, '账户已被禁用或状态异常', 403, 403);
         return;
       }
@@ -60,14 +74,14 @@ module.exports = async (ctx, next) => {
       };
     } catch (dbError) {
       logger.error('数据库查询用户失败', {
-        userId: user.id,
+        userId: decoded.id,
         error: dbError.message,
         method: ctx.method,
         url: ctx.url,
         ip: ctx.ip
       });
       // 数据库查询失败时使用JWT中的用户信息
-      ctx.state.user = user;
+      ctx.state.user = decoded;
     }
 
     // 记录成功认证（仅在开发环境或特殊情况下）

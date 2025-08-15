@@ -1,7 +1,8 @@
-const { signToken } = require("../utils/jwt");
+const { signToken, generateRefreshToken } = require("../utils/jwt");
 const UserRepository = require("../repositories/UserRepository");
 const logger = require("../utils/logger");
 const { sendEmailVerification, sendWelcomeEmail, sendSecurityAlert } = require("../utils/mailer");
+const redis = require("../utils/redis");
 
 class UserService {
   async register(userData) {
@@ -200,16 +201,36 @@ class UserService {
 
   generateUserResponse(user) {
     // 生成包含用户信息的token
-    const token = signToken({
+    const payload = {
       id: user.id,
       email: user.email,
       role: user.role,
-    });
+    };
+
+    const accessToken = signToken(payload);
+    const refreshToken = generateRefreshToken(payload);
 
     return {
       user: this.formatUserData(user),
-      token,
+      token: accessToken,
+      refreshToken,
+      expiresIn: '7d'
     };
+  }
+
+  async logout(userId, tokenId) {
+    try {
+      // 将令牌加入黑名单
+      if (tokenId) {
+        await redis.setWithExpiry(`blacklist:${tokenId}`, '1', 7 * 24 * 60 * 60); // 7天
+      }
+      
+      logger.logBusiness('用户退出登录', { userId });
+      return true;
+    } catch (error) {
+      logger.error('用户退出登录失败', { userId, error: error.message });
+      throw error;
+    }
   }
 
   formatUserData(user) {

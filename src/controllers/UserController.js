@@ -40,6 +40,16 @@ class UserController {
     }
   }
 
+  async logout(ctx) {
+    try {
+      const tokenId = ctx.state.tokenId; // 从中间件获取
+      await UserService.logout(ctx.state.user.id, tokenId);
+      Response.success(ctx, null, "退出登录成功");
+    } catch (err) {
+      Response.error(ctx, err.message, -1, 500);
+    }
+  }
+
   async getProfile(ctx) {
     try {
       const result = await UserService.getProfile(ctx.state.user.id);
