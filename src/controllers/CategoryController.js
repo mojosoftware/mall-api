@@ -1,4 +1,3 @@
-const Joi = require('joi');
 const CategoryService = require('../services/CategoryService');
 const Response = require('../utils/response');
 
@@ -24,22 +23,8 @@ class CategoryController {
   }
 
   async createCategory(ctx) {
-    const schema = Joi.object({
-      name: Joi.string().min(1).max(100).required(),
-      description: Joi.string().optional(),
-      image: Joi.string().optional(),
-      status: Joi.string().valid('active', 'inactive').optional(),
-      sort: Joi.number().integer().optional()
-    });
-
-    const { error, value } = schema.validate(ctx.request.body);
-    if (error) {
-      Response.error(ctx, error.details[0].message, -1, 400);
-      return;
-    }
-
     try {
-      const category = await CategoryService.createCategory(value);
+      const category = await CategoryService.createCategory(ctx.request.body);
       Response.success(ctx, category, "创建分类成功");
     } catch (err) {
       Response.error(ctx, err.message, -1, 400);
@@ -47,23 +32,9 @@ class CategoryController {
   }
 
   async updateCategory(ctx) {
-    const schema = Joi.object({
-      name: Joi.string().min(1).max(100).optional(),
-      description: Joi.string().optional(),
-      image: Joi.string().optional(),
-      status: Joi.string().valid('active', 'inactive').optional(),
-      sort: Joi.number().integer().optional()
-    });
-
-    const { error, value } = schema.validate(ctx.request.body);
-    if (error) {
-      Response.error(ctx, error.details[0].message, -1, 400);
-      return;
-    }
-
     try {
       const { id } = ctx.params;
-      const category = await CategoryService.updateCategory(parseInt(id), value);
+      const category = await CategoryService.updateCategory(parseInt(id), ctx.request.body);
       Response.success(ctx, category, "更新分类成功");
     } catch (err) {
       Response.error(ctx, err.message, -1, 400);

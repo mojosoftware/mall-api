@@ -44,7 +44,7 @@ function validateSchema(schema, source = 'body') {
 const commonSchemas = {
   pagination: Joi.object({
     page: Joi.number().integer().min(1).default(1),
-    pageSize: Joi.number().integer().min(1).max(100).default(10)
+    limit: Joi.number().integer().min(1).max(100).default(10)
   }),
   
   id: Joi.object({
@@ -54,70 +54,167 @@ const commonSchemas = {
 
 // 用户相关验证规则
 const userSchemas = {
-  login: Joi.object({
-    username: Joi.string().min(3).max(50).required(),
-    password: Joi.string().min(6).max(50).required()
-  }),
-  
-  create: Joi.object({
+  register: Joi.object({
     username: Joi.string().min(3).max(50).required(),
     email: Joi.string().email().required(),
-    password: Joi.string().min(6).max(50).required(),
-    real_name: Joi.string().max(50).optional(),
+    password: Joi.string().min(6).required(),
     phone: Joi.string().pattern(/^1[3-9]\d{9}$/).optional(),
-    avatar: Joi.string().uri().optional()
+  }),
+  
+  login: Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().required(),
+  }),
+  
+  updateProfile: Joi.object({
+    username: Joi.string().min(3).max(50).optional(),
+    phone: Joi.string().pattern(/^1[3-9]\d{9}$/).optional(),
+    avatar: Joi.string().uri({ allowRelative: true }).optional(),
+  }),
+
+  changePassword: Joi.object({
+    currentPassword: Joi.string().required(),
+    newPassword: Joi.string().min(6).required(),
+  }),
+
+  listUsers: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+    status: Joi.string().valid("active", "inactive").optional(),
+    email: Joi.string().optional(),
+    createdAtStart: Joi.date().iso().optional(),
+    createdAtEnd: Joi.date().iso().optional(),
+  }).unknown(true)
+};
+
+// 商品相关验证规则
+const productSchemas = {
+  create: Joi.object({
+    name: Joi.string().min(1).max(200).required(),
+    description: Joi.string().optional(),
+    price: Joi.number().positive().required(),
+    originalPrice: Joi.number().positive().optional(),
+    stock: Joi.number().integer().min(0).required(),
+    categoryId: Joi.number().integer().positive().required(),
+    images: Joi.array().items(Joi.string()).optional(),
+    status: Joi.string().valid('active', 'inactive').optional()
   }),
   
   update: Joi.object({
-    email: Joi.string().email().optional(),
-    real_name: Joi.string().max(50).optional(),
-    phone: Joi.string().pattern(/^1[3-9]\d{9}$/).optional(),
-    avatar: Joi.string().uri().optional(),
-    status: Joi.number().integer().valid(0, 1).optional()
+    name: Joi.string().min(1).max(200).optional(),
+    description: Joi.string().optional(),
+    price: Joi.number().positive().optional(),
+    originalPrice: Joi.number().positive().optional(),
+    stock: Joi.number().integer().min(0).optional(),
+    categoryId: Joi.number().integer().positive().optional(),
+    images: Joi.array().items(Joi.string()).optional(),
+    status: Joi.string().valid('active', 'inactive').optional()
+  }),
+  
+  query: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+    search: Joi.string().optional(),
+    categoryId: Joi.number().integer().positive().optional(),
+    status: Joi.string().valid('active', 'inactive').optional()
+  }).unknown(true)
+};
+
+// 分类相关验证规则
+const categorySchemas = {
+  create: Joi.object({
+    name: Joi.string().min(1).max(100).required(),
+    description: Joi.string().optional(),
+    image: Joi.string().optional(),
+    status: Joi.string().valid('active', 'inactive').optional(),
+    sort: Joi.number().integer().optional()
+  }),
+  
+  update: Joi.object({
+    name: Joi.string().min(1).max(100).optional(),
+    description: Joi.string().optional(),
+    image: Joi.string().optional(),
+    status: Joi.string().valid('active', 'inactive').optional(),
+    sort: Joi.number().integer().optional()
+  }),
+
+  query: Joi.object({
+    status: Joi.string().valid('active', 'inactive').optional()
+  }).unknown(true)
+};
+
+// 购物车相关验证规则
+const cartSchemas = {
+  addToCart: Joi.object({
+    productId: Joi.number().integer().positive().required(),
+    quantity: Joi.number().integer().positive().default(1)
+  }),
+  
+  updateCartItem: Joi.object({
+    quantity: Joi.number().integer().positive().required()
   })
 };
 
-// 角色相关验证规则
-const roleSchemas = {
+// 订单相关验证规则
+const orderSchemas = {
   create: Joi.object({
-    name: Joi.string().min(2).max(50).required(),
-    code: Joi.string().min(2).max(50).required(),
-    description: Joi.string().max(255).optional()
+    items: Joi.array().items(
+      Joi.object({
+        productId: Joi.number().integer().positive().required(),
+        quantity: Joi.number().integer().positive().required()
+      })
+    ).min(1).required(),
+    address: Joi.object({
+      name: Joi.string().required(),
+      phone: Joi.string().required(),
+      province: Joi.string().required(),
+      city: Joi.string().required(),
+      district: Joi.string().required(),
+      detail: Joi.string().required()
+    }).required(),
+    paymentMethod: Joi.string().optional(),
+    remark: Joi.string().optional()
   }),
   
-  update: Joi.object({
-    name: Joi.string().min(2).max(50).optional(),
-    description: Joi.string().max(255).optional(),
-    status: Joi.number().integer().valid(0, 1).optional()
+  updateStatus: Joi.object({
+    status: Joi.string().valid('pending', 'paid', 'shipped', 'delivered', 'cancelled').required()
   }),
-  
-  assignPermissions: Joi.object({
-    permission_ids: Joi.array().items(Joi.number().integer().min(1)).required()
-  })
+
+  query: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+    status: Joi.string().valid('pending', 'paid', 'shipped', 'delivered', 'cancelled').optional()
+  }).unknown(true)
 };
 
-// 权限相关验证规则
-const permissionSchemas = {
-  create: Joi.object({
-    name: Joi.string().min(2).max(50).required(),
-    code: Joi.string().min(2).max(100).required(),
-    type: Joi.string().valid('menu', 'button', 'api').required(),
-    parent_id: Joi.number().integer().min(0).default(0),
-    path: Joi.string().max(255).optional(),
-    method: Joi.string().valid('GET', 'POST', 'PUT', 'DELETE', 'PATCH').optional(),
-    icon: Joi.string().max(50).optional(),
-    sort_order: Joi.number().integer().default(0)
+// 管理员相关验证规则
+const adminSchemas = {
+  updateUserStatus: Joi.object({
+    status: Joi.string().valid('active', 'inactive').required()
   }),
-  
-  update: Joi.object({
-    name: Joi.string().min(2).max(50).optional(),
-    type: Joi.string().valid('menu', 'button', 'api').optional(),
-    parent_id: Joi.number().integer().min(0).optional(),
-    path: Joi.string().max(255).optional(),
-    method: Joi.string().valid('GET', 'POST', 'PUT', 'DELETE', 'PATCH').optional(),
-    icon: Joi.string().max(50).optional(),
-    sort_order: Joi.number().integer().optional(),
-    status: Joi.number().integer().valid(0, 1).optional()
+
+  updateOrderStatus: Joi.object({
+    status: Joi.string().valid('pending', 'paid', 'shipped', 'delivered', 'cancelled').required()
+  }),
+
+  queryUsers: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+    search: Joi.string().optional()
+  }).unknown(true),
+
+  queryOrders: Joi.object({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+    status: Joi.string().valid('pending', 'paid', 'shipped', 'delivered', 'cancelled').optional(),
+    userId: Joi.number().integer().positive().optional()
+  }).unknown(true)
+};
+
+// 文件上传验证规则
+const uploadSchemas = {
+  file: Joi.object({
+    file: Joi.any().required()
   })
 };
 
@@ -125,6 +222,10 @@ module.exports = {
   validateSchema,
   commonSchemas,
   userSchemas,
-  roleSchemas,
-  permissionSchemas
+  productSchemas,
+  categorySchemas,
+  cartSchemas,
+  orderSchemas,
+  adminSchemas,
+  uploadSchemas
 };

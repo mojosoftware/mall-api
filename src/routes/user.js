@@ -3,6 +3,7 @@ const UserController = require("../controllers/UserController");
 const authMiddleware = require("../middleware/auth");
 const adminAuth = require("../middleware/adminAuth");
 const rateLimiter = require("../middleware/rateLimiter");
+const { validateSchema, userSchemas } = require("../utils/validator");
 
 const router = new Router({
   prefix: "/api/users",
@@ -12,9 +13,14 @@ const router = new Router({
 router.post(
   "/register",
   rateLimiter({ points: 5, duration: 60, keyPrefix: "register_ip" }),
+  validateSchema(userSchemas.register),
   UserController.register
 );
-router.post("/login", rateLimiter({ points: 5, duration: 60, keyPrefix: "login_ip" }), UserController.login);
+router.post("/login", 
+  rateLimiter({ points: 5, duration: 60, keyPrefix: "login_ip" }),
+  validateSchema(userSchemas.login),
+  UserController.login
+);
 router.get("/verify-email", UserController.verifyEmail);
 
 // 需要认证的路由
@@ -22,12 +28,12 @@ router.use(authMiddleware);
 
 // 普通用户路由
 router.get("/profile", UserController.getProfile);
-router.put("/profile", UserController.updateProfile);
-router.post("/change-password", UserController.changePassword);
+router.put("/profile", validateSchema(userSchemas.updateProfile), UserController.updateProfile);
+router.post("/change-password", validateSchema(userSchemas.changePassword), UserController.changePassword);
 
 // 管理员路由
 router.use(adminAuth);
-router.get("/", UserController.listUsers); // 获取用户列表
+router.get("/", validateSchema(userSchemas.listUsers, 'query'), UserController.listUsers); // 获取用户列表
 router.put("/:id/disable", UserController.disableUser); // 禁用用户
 router.put("/:id/enable", UserController.enableUser); // 启用用户
 router.get("/:id", UserController.getUserById); // 获取指定用户信息

@@ -23,14 +23,7 @@ class AdminController {
   async updateUserStatus(ctx) {
     try {
       const { id } = ctx.params;
-      const { status } = ctx.request.body;
-      
-      if (!['active', 'inactive'].includes(status)) {
-        Response.error(ctx, "状态值无效", -1, 400);
-        return;
-      }
-      
-      const user = await UserRepository.update(parseInt(id), { status });
+      const user = await UserRepository.update(parseInt(id), { status: ctx.request.body.status });
       if (!user) {
         Response.error(ctx, "用户不存在", -1, 404);
         return;
@@ -62,14 +55,7 @@ class AdminController {
   async updateOrderStatus(ctx) {
     try {
       const { id } = ctx.params;
-      const { status } = ctx.request.body;
-      
-      if (!['pending', 'paid', 'shipped', 'delivered', 'cancelled'].includes(status)) {
-        Response.error(ctx, "状态值无效", -1, 400);
-        return;
-      }
-      
-      const order = await OrderRepository.updateStatus(parseInt(id), status);
+      const order = await OrderRepository.updateStatus(parseInt(id), ctx.request.body.status);
       if (!order) {
         Response.error(ctx, "订单不存在", -1, 404);
         return;

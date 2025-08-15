@@ -1,4 +1,3 @@
-const Joi = require('joi');
 const ProductService = require('../services/ProductService');
 const Response = require('../utils/response');
 
@@ -32,25 +31,8 @@ class ProductController {
   }
 
   async createProduct(ctx) {
-    const schema = Joi.object({
-      name: Joi.string().min(1).max(200).required(),
-      description: Joi.string().optional(),
-      price: Joi.number().positive().required(),
-      originalPrice: Joi.number().positive().optional(),
-      stock: Joi.number().integer().min(0).required(),
-      categoryId: Joi.number().integer().positive().required(),
-      images: Joi.array().items(Joi.string()).optional(),
-      status: Joi.string().valid('active', 'inactive').optional()
-    });
-
-    const { error, value } = schema.validate(ctx.request.body);
-    if (error) {
-      Response.error(ctx, error.details[0].message, -1, 400);
-      return;
-    }
-
     try {
-      const product = await ProductService.createProduct(value);
+      const product = await ProductService.createProduct(ctx.request.body);
       Response.success(ctx, product, "创建商品成功");
     } catch (err) {
       Response.error(ctx, err.message, -1, 400);
@@ -58,26 +40,9 @@ class ProductController {
   }
 
   async updateProduct(ctx) {
-    const schema = Joi.object({
-      name: Joi.string().min(1).max(200).optional(),
-      description: Joi.string().optional(),
-      price: Joi.number().positive().optional(),
-      originalPrice: Joi.number().positive().optional(),
-      stock: Joi.number().integer().min(0).optional(),
-      categoryId: Joi.number().integer().positive().optional(),
-      images: Joi.array().items(Joi.string()).optional(),
-      status: Joi.string().valid('active', 'inactive').optional()
-    });
-
-    const { error, value } = schema.validate(ctx.request.body);
-    if (error) {
-      Response.error(ctx, error.details[0].message, -1, 400);
-      return;
-    }
-
     try {
       const { id } = ctx.params;
-      const product = await ProductService.updateProduct(parseInt(id), value);
+      const product = await ProductService.updateProduct(parseInt(id), ctx.request.body);
       Response.success(ctx, product, "更新商品成功");
     } catch (err) {
       Response.error(ctx, err.message, -1, 400);

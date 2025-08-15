@@ -1,6 +1,7 @@
 const Router = require("@koa/router");
 const CartController = require("../controllers/CartController");
 const authMiddleware = require("../middleware/auth");
+const { validateSchema, cartSchemas } = require("../utils/validator");
 
 const router = new Router({
   prefix: "/api/cart",
@@ -10,8 +11,8 @@ const router = new Router({
 router.use(authMiddleware);
 
 router.get("/", CartController.getCart);
-router.post("/add", CartController.addToCart);
-router.put("/update/:itemId", CartController.updateCartItem);
+router.post("/add", validateSchema(cartSchemas.addToCart), CartController.addToCart);
+router.put("/update/:itemId", validateSchema(cartSchemas.updateCartItem), CartController.updateCartItem);
 router.delete("/remove/:itemId", CartController.removeFromCart);
 router.delete("/clear", CartController.clearCart);
 
