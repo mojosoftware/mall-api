@@ -7,6 +7,9 @@ const { rateLimitMail } = require("../utils/mailer");
 class UserService {
   async register(userData) {
     const { email, username } = userData;
+    
+    logger.logBusiness('用户注册尝试', { email, username });
+    
     // 检查邮箱和用户名是否已存在
     const existingEmail = await UserRepository.findByEmail(email);
 
@@ -17,35 +20,44 @@ class UserService {
     if (existingUsername?.status === "active"  || existingUsername.lastLoginAt !== null) {
       throw new Error("用户名已被使用");
     }
+    
     // 检查邮箱发送频率
     await rateLimitMail(email);
+    
     // 注册用户默认未激活
     if (!existingEmail && !existingUsername) {
       await UserRepository.create({
         ...userData,
         status: "inactive",
       });
+      logger.logBusiness('用户注册成功', { email, username });
     }
-    // return this.generateUserResponse(user);
   }
 
   async login(email, password) {
+    logger.logBusiness('用户登录尝试', { email });
+    
     const user = await UserRepository.findByEmail(email);
     if (!user) {
+      logger.logBusiness('用户登录失败 - 用户不存在', { email });
       throw new Error("用户不存在");
     }
 
     const isValidPassword = await user.comparePassword(password);
     if (!isValidPassword) {
+      logger.logBusiness('用户登录失败 - 密码错误', { email, userId: user.id });
       throw new Error("密码错误");
     }
 
     if (user.status !== "active") {
+      logger.logBusiness('用户登录失败 - 账户未激活', { email, userId: user.id, status: user.status });
       throw new Error("账户未激活或已被禁用");
     }
 
     // 更新最后登录时间
     await UserRepository.updateLastLogin(user.id);
+    
+    logger.logBusiness('用户登录成功', { email, userId: user.id });
 
     return this.generateUserResponse(user);
   }
@@ -76,9 +88,11 @@ class UserService {
     if (!isValidPassword) {
       throw new Error("当前密码错误");
     }
+    
+    // 强制退出所有设备的逻辑可以在这里添加
 
     await UserRepository.update(userId, { password: newPassword });
-    logger.info(`用户 ${userId} 修改密码`);
+    logger.logBusiness('用户修改密码', { userId });
 
     return { message: "密码修改成功" };
   }
@@ -122,17 +136,27 @@ class UserService {
     if (user.role === "admin") {
       throw new Error("不能修改管理员状态");
     }
+    
+    const oldStatus = user.status;
 
     await UserRepository.update(id, { status });
-    logger.info(`用户 ${id} 状态更新为 ${status}`);
+    logger.logBusiness('管理员更新用户状态', { 
+      userId: id, 
+      oldStatus, 
+      newStatus: status 
+    });
+    
     return true;
   }
 
   async updateUserStatusByEmail(email, status) {
+    logger.logBusiness('邮箱验证激活用户', { email, status });
+    
     const user = await UserRepository.findByEmail(email);
     if (!user) {
       throw new Error("用户不存在");
     }
+    
     return this.updateUserStatus(user.id, status);
   }
 

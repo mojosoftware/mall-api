@@ -5,7 +5,8 @@ module.exports = async (ctx, next) => {
   try {
     await next();
   } catch (err) {
-    logger.error('API错误:', err);
+    // 记录详细的错误信息
+    logger.logError(ctx, err, 'API请求处理异常');
     
     const status = err.status || 500;
     const message = err.message || '服务器内部错误';

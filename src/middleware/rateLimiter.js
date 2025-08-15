@@ -1,6 +1,7 @@
 const { RateLimiterRedis } = require('rate-limiter-flexible');
 const redis = require('../utils/redis');
 const Response = require('../utils/response');
+const logger = require('../utils/logger');
 
 module.exports = ({
   points = 10,
@@ -19,6 +20,17 @@ module.exports = ({
       await rateLimiter.consume(ctx.ip);
       await next();
     } catch (rejRes) {
+      // 记录限流日志
+      logger.warn('请求频率限制触发', {
+        ip: ctx.ip,
+        method: ctx.method,
+        url: ctx.url,
+        userAgent: ctx.headers['user-agent'],
+        keyPrefix,
+        points,
+        duration
+      });
+      
       Response.error(ctx, '请求过于频繁，请稍后再试', -1, 429);
     }
   }
