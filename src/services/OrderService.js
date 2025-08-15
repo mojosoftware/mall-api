@@ -1,6 +1,8 @@
 const OrderRepository = require('../repositories/OrderRepository');
 const CartRepository = require('../repositories/CartRepository');
 const ProductRepository = require('../repositories/ProductRepository');
+const { sendOrderConfirmation, sendOrderStatusUpdate } = require('../utils/mailer');
+const UserRepository = require('../repositories/UserRepository');
 
 class OrderService {
   async createOrder(userId, orderData) {
@@ -58,7 +60,30 @@ class OrderService {
       await CartRepository.deleteByUserIdAndProductId(userId, item.productId);
     }
     
-    return await OrderRepository.findById(order.id);
+    const createdOrder = await OrderRepository.findById(order.id);
+    
+    // 发送订单确认邮件
+    try {
+      const user = await UserRepository.findById(userId);
+      if (user && user.email) {
+        await sendOrderConfirmation(user.email, {
+          username: user.username,
+          orderNo: createdOrder.orderNo,
+          totalAmount: createdOrder.totalAmount,
+          items: createdOrder.items,
+          address: createdOrder.address,
+          createdAt: createdOrder.createdAt
+        });
+      }
+    } catch (emailError) {
+      // 邮件发送失败不影响订单创建
+      logger.warn('发送订单确认邮件失败', { 
+        orderId: createdOrder.id,
+        error: emailError.message 
+      });
+    }
+    
+    return createdOrder;
   }
 
   async getOrderById(id, userId) {
@@ -84,10 +109,33 @@ class OrderService {
   }
 
   async updateOrderStatus(id, status) {
+    const oldOrder = await OrderRepository.findById(id);
+    if (!oldOrder) {
+      throw new Error('订单不存在');
+    }
+    
     const order = await OrderRepository.updateStatus(id, status);
     if (!order) {
       throw new Error('订单不存在');
     }
+    
+    // 发送订单状态更新邮件
+    try {
+      const user = await UserRepository.findById(order.userId);
+      if (user && user.email && oldOrder.status !== status) {
+        await sendOrderStatusUpdate(user.email, {
+          username: user.username,
+          orderNo: order.orderNo,
+          status: status
+        });
+      }
+    } catch (emailError) {
+      logger.warn('发送订单状态更新邮件失败', { 
+        orderId: id,
+        error: emailError.message 
+      });
+    }
+    
     return order;
   }
 }

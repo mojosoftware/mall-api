@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= subject || siteName %></title>
+    <style>
+        /* 重置样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f8f9fa;
+        }
+        
+        /* 容器样式 */
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 头部样式 */
+        .email-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 40px;
+            text-align: center;
+        }
+        
+        .email-header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .email-header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        /* 内容区域 */
+        .email-content {
+            padding: 40px;
+        }
+        
+        .email-content h2 {
+            color: #2d3748;
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .email-content h3 {
+            color: #4a5568;
+            font-size: 18px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .email-content p {
+            margin-bottom: 16px;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #4a5568;
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            display: inline-block;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #fc8181 0%, #e53e3e 100%);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #68d391 0%, #38a169 100%);
+        }
+        
+        /* 信息框样式 */
+        .info-box {
+            background-color: #ebf8ff;
+            border-left: 4px solid #3182ce;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .warning-box {
+            background-color: #fffbeb;
+            border-left: 4px solid #d69e2e;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .success-box {
+            background-color: #f0fff4;
+            border-left: 4px solid #38a169;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .error-box {
+            background-color: #fed7d7;
+            border-left: 4px solid #e53e3e;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        /* 表格样式 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .data-table th {
+            background-color: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* 分割线 */
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #e2e8f0, transparent);
+            margin: 30px 0;
+        }
+        
+        /* 页脚样式 */
+        .email-footer {
+            background-color: #f7fafc;
+            padding: 30px 40px;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .email-footer p {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .email-footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .email-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* 社交媒体链接 */
+        .social-links {
+            margin: 20px 0;
+        }
+        
+        .social-links a {
+            display: inline-block;
+            margin: 0 10px;
+            padding: 8px;
+            background-color: #e2e8f0;
+            border-radius: 50%;
+            text-decoration: none;
+            color: #4a5568;
+            transition: all 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            background-color: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        /* 响应式设计 */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                margin: 0;
+                box-shadow: none;
+            }
+            
+            .email-header,
+            .email-content,
+            .email-footer {
+                padding: 20px;
+            }
+            
+            .email-header h1 {
+                font-size: 24px;
+            }
+            
+            .email-content h2 {
+                font-size: 20px;
+            }
+            
+            .btn {
+                display: block;
+                text-align: center;
+                margin: 20px 0;
+            }
+            
+            .data-table {
+                font-size: 14px;
+            }
+            
+            .data-table th,
+            .data-table td {
+                padding: 8px 12px;
+            }
+        }
+        
+        /* 深色模式支持 */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #1a202c;
+            }
+            
+            .email-container {
+                background-color: #2d3748;
+                color: #e2e8f0;
+            }
+            
+            .email-content h2,
+            .email-content h3 {
+                color: #e2e8f0;
+            }
+            
+            .email-content p {
+                color: #cbd5e0;
+            }
+            
+            .email-footer {
+                background-color: #1a202c;
+                border-top-color: #4a5568;
+            }
+            
+            .data-table {
+                background-color: #2d3748;
+            }
+            
+            .data-table th {
+                background-color: #1a202c;
+                color: #e2e8f0;
+            }
+            
+            .data-table td {
+                border-bottom-color: #4a5568;
+                color: #cbd5e0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- 邮件头部 -->
+        <div class="email-header">
+            <h1><%= siteName %></h1>
+            <p>您值得信赖的购物平台</p>
+        </div>
+        
+        <!-- 邮件内容 -->
+        <div class="email-content">
+            <%- content %>
+        </div>
+        
+        <!-- 邮件页脚 -->
+        <div class="email-footer">
+            <div class="divider"></div>
+            <p>此邮件由系统自动发送，请勿直接回复。</p>
+            <p>如有疑问，请联系客服：<a href="mailto:<%= supportEmail %>"><%= supportEmail %></a></p>
+            <p>访问我们的网站：<a href="<%= siteUrl %>"><%= siteUrl %></a></p>
+            
+            <div class="social-links">
+                <a href="#" title="微信">📱</a>
+                <a href="#" title="微博">🐦</a>
+                <a href="#" title="QQ">💬</a>
+            </div>
+            
+            <p style="margin-top: 20px; font-size: 12px; color: #a0aec0;">
+                © <%= currentYear %> <%= siteName %>. 保留所有权利。
+            </p>
+            <p style="font-size: 12px; color: #a0aec0;">
+                发送时间：<%= timestamp %>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

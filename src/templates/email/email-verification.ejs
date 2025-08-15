@@ -1,0 +1,44 @@
+<% 
+const content = `
+<h2>👋 您好，${username}！</h2>
+
+<p>感谢您注册 ${siteName}！为了确保您的账户安全，请验证您的邮箱地址。</p>
+
+<div class="info-box">
+    <p><strong>📧 邮箱地址：</strong>${to || email}</p>
+    <p><strong>⏰ 验证链接有效期：</strong>${expiryMinutes} 分钟</p>
+</div>
+
+<p>请点击下方按钮完成邮箱验证：</p>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="${verifyUrl}" class="btn">
+        ✅ 验证邮箱
+    </a>
+</div>
+
+<p>如果按钮无法点击，请复制以下链接到浏览器地址栏：</p>
+<p style="word-break: break-all; background-color: #f7fafc; padding: 10px; border-radius: 4px; font-family: monospace;">
+    ${verifyUrl}
+</p>
+
+<div class="warning-box">
+    <p><strong>⚠️ 安全提醒：</strong></p>
+    <ul style="margin-left: 20px;">
+        <li>此验证链接仅在 ${expiryMinutes} 分钟内有效</li>
+        <li>如果您没有注册账户，请忽略此邮件</li>
+        <li>请勿将此链接分享给他人</li>
+    </ul>
+</div>
+
+<p>验证完成后，您将可以：</p>
+<ul style="margin-left: 20px; color: #4a5568;">
+    <li>🛒 浏览和购买商品</li>
+    <li>📦 查看订单状态</li>
+    <li>💰 享受会员专属优惠</li>
+    <li>🎁 参与积分活动</li>
+</ul>
+`;
+%>
+
+<%- include('base', { content: content, subject: '邮箱验证', siteName, siteUrl, supportEmail, currentYear, timestamp }) %>

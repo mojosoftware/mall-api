@@ -1,8 +1,7 @@
 const { signToken } = require("../utils/jwt");
 const UserRepository = require("../repositories/UserRepository");
 const logger = require("../utils/logger");
-const redis = require("../utils/redis");
-const { rateLimitMail } = require("../utils/mailer");
+const { sendEmailVerification, sendWelcomeEmail, sendSecurityAlert } = require("../utils/mailer");
 
 class UserService {
   async register(userData) {
@@ -22,7 +21,7 @@ class UserService {
     }
     
     // 检查邮箱发送频率
-    await rateLimitMail(email);
+    await sendEmailVerification(email, username);
     
     // 注册用户默认未激活
     if (!existingEmail && !existingUsername) {
@@ -57,6 +56,22 @@ class UserService {
     // 更新最后登录时间
     await UserRepository.updateLastLogin(user.id);
     
+    // 发送登录安全提醒（可选）
+    if (process.env.SEND_LOGIN_ALERTS === 'true') {
+      try {
+        await sendSecurityAlert(email, {
+          username: user.username,
+          type: 'login',
+          message: '账户登录成功',
+          ip: '127.0.0.1', // 实际使用时从请求中获取
+          userAgent: 'Unknown',
+          timestamp: new Date().toLocaleString('zh-CN')
+        });
+      } catch (alertError) {
+        logger.warn('发送登录提醒失败', { error: alertError.message });
+      }
+    }
+    
     logger.logBusiness('用户登录成功', { email, userId: user.id });
 
     return this.generateUserResponse(user);
@@ -89,7 +104,19 @@ class UserService {
       throw new Error("当前密码错误");
     }
     
-    // 强制退出所有设备的逻辑可以在这里添加
+    // 发送密码修改安全提醒
+    try {
+      await sendSecurityAlert(user.email, {
+        username: user.username,
+        type: 'password_change',
+        message: '账户密码已修改',
+        ip: '127.0.0.1',
+        userAgent: 'Unknown',
+        timestamp: new Date().toLocaleString('zh-CN')
+      });
+    } catch (alertError) {
+      logger.warn('发送密码修改提醒失败', { error: alertError.message });
+    }
 
     await UserRepository.update(userId, { password: newPassword });
     logger.logBusiness('用户修改密码', { userId });
@@ -157,7 +184,18 @@ class UserService {
       throw new Error("用户不存在");
     }
     
-    return this.updateUserStatus(user.id, status);
+    const result = await this.updateUserStatus(user.id, status);
+    
+    // 发送欢迎邮件
+    if (status === 'active') {
+      try {
+        await sendWelcomeEmail(email, user.username);
+      } catch (welcomeError) {
+        logger.warn('发送欢迎邮件失败', { error: welcomeError.message });
+      }
+    }
+    
+    return result;
   }
 
   generateUserResponse(user) {

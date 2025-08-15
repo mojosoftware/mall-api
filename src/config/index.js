@@ -2,6 +2,8 @@ require("dotenv").config();
 
 module.exports = {
   port: process.env.PORT || 3000,
+  siteName: process.env.SITE_NAME || "商城系统",
+  siteUrl: process.env.SITE_URL || "http://localhost:3000",
   jwtSecret: process.env.JWT_SECRET || "your-secret-key",
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
 
@@ -27,6 +29,7 @@ module.exports = {
     user: process.env.EMAIL_USER || "",
     pass: process.env.EMAIL_PASS || "",
     from: process.env.EMAIL_FROM || "noreply@example.com",
+    supportEmail: process.env.EMAIL_SUPPORT || process.env.EMAIL_FROM || "support@example.com",
   },
 
   // Redis配置

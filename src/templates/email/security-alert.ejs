@@ -1,0 +1,103 @@
+<% 
+const content = `
+<h2>🚨 账户安全提醒</h2>
+
+<p>亲爱的 ${username}，</p>
+
+<p>我们检测到您的账户有以下安全活动，请及时确认：</p>
+
+<div class="error-box">
+    <p><strong>⚠️ 安全提醒类型：</strong>${alertType}</p>
+    <p><strong>📝 详细信息：</strong>${alertMessage}</p>
+    <p><strong>🕐 发生时间：</strong>${timestamp}</p>
+</div>
+
+<h3>🔍 活动详情：</h3>
+<table class="data-table">
+    <tr>
+        <td><strong>IP地址</strong></td>
+        <td>${ip || '未知'}</td>
+    </tr>
+    <tr>
+        <td><strong>设备信息</strong></td>
+        <td>${userAgent || '未知设备'}</td>
+    </tr>
+    <tr>
+        <td><strong>发生时间</strong></td>
+        <td>${timestamp}</td>
+    </tr>
+</table>
+
+<% if (alertType === 'login') { %>
+<div class="warning-box">
+    <h3>🔐 登录提醒</h3>
+    <p>如果这是您本人的登录操作，请忽略此邮件。</p>
+    <p>如果不是您本人操作，请立即：</p>
+    <ul style="margin-left: 20px;">
+        <li>修改账户密码</li>
+        <li>检查账户安全设置</li>
+        <li>联系客服寻求帮助</li>
+    </ul>
+</div>
+<% } else if (alertType === 'password_change') { %>
+<div class="error-box">
+    <h3>🔑 密码修改提醒</h3>
+    <p>您的账户密码已被修改。</p>
+    <p>如果不是您本人操作，请立即联系客服！</p>
+</div>
+<% } else if (alertType === 'suspicious_activity') { %>
+<div class="error-box">
+    <h3>🕵️ 可疑活动检测</h3>
+    <p>我们检测到您的账户存在异常活动。</p>
+    <p>为了保护您的账户安全，建议您：</p>
+    <ul style="margin-left: 20px;">
+        <li>立即修改密码</li>
+        <li>启用两步验证</li>
+        <li>检查最近的登录记录</li>
+    </ul>
+</div>
+<% } %>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="${siteUrl}/security" class="btn btn-danger">
+        🛡️ 检查账户安全
+    </a>
+    <a href="${siteUrl}/change-password" class="btn">
+        🔑 修改密码
+    </a>
+</div>
+
+<h3>🛡️ 账户安全建议：</h3>
+<div class="info-box">
+    <ul style="margin-left: 20px;">
+        <li><strong>使用强密码：</strong>包含大小写字母、数字和特殊字符</li>
+        <li><strong>定期更换：</strong>建议每3-6个月更换一次密码</li>
+        <li><strong>启用两步验证：</strong>为账户添加额外的安全保护</li>
+        <li><strong>注意登录环境：</strong>避免在公共网络下登录</li>
+        <li><strong>及时退出：</strong>使用完毕后及时退出账户</li>
+    </ul>
+</div>
+
+<h3>📞 紧急联系方式：</h3>
+<div class="error-box">
+    <p>如果您的账户被盗用或发现异常，请立即联系我们：</p>
+    <ul style="margin-left: 20px;">
+        <li><strong>客服邮箱：</strong><a href="mailto:${supportEmail}">${supportEmail}</a></li>
+        <li><strong>客服热线：</strong>400-123-4567</li>
+        <li><strong>在线客服：</strong><a href="${siteUrl}/support">点击联系</a></li>
+    </ul>
+</div>
+
+<div class="warning-box">
+    <p><strong>💡 重要提醒：</strong></p>
+    <ul style="margin-left: 20px;">
+        <li>我们永远不会通过邮件要求您提供密码</li>
+        <li>请勿点击可疑链接或下载不明附件</li>
+        <li>定期检查账户活动记录</li>
+        <li>保护好您的个人信息</li>
+    </ul>
+</div>
+`;
+%>
+
+<%- include('base', { content: content, subject: '账户安全提醒', siteName, siteUrl, supportEmail, currentYear, timestamp }) %>

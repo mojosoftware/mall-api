@@ -1,0 +1,81 @@
+<% 
+const content = `
+<h2>🎉 欢迎加入 ${siteName}！</h2>
+
+<p>亲爱的 ${username}，</p>
+
+<p>欢迎您成为 ${siteName} 的一员！我们很高兴您选择了我们的平台。</p>
+
+<div class="success-box">
+    <h3>🎁 新用户专享礼包：</h3>
+    <ul style="margin-left: 20px;">
+        <li>💰 新用户专享优惠券</li>
+        <li>🎫 满减券礼包</li>
+        <li>⭐ 积分奖励</li>
+        <li>🚚 首单免运费</li>
+    </ul>
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="${siteUrl}" class="btn">
+        🛒 开始购物
+    </a>
+    <a href="${siteUrl}/profile" class="btn btn-secondary">
+        👤 完善资料
+    </a>
+</div>
+
+<h3>🌟 为什么选择我们：</h3>
+<div class="info-box">
+    <ul style="margin-left: 20px;">
+        <li><strong>🛡️ 品质保证：</strong>所有商品均经过严格筛选</li>
+        <li><strong>🚚 快速配送：</strong>多仓发货，快速到达</li>
+        <li><strong>💳 安全支付：</strong>多种支付方式，安全可靠</li>
+        <li><strong>🎧 贴心服务：</strong>7×24小时客服支持</li>
+        <li><strong>🔄 无忧退换：</strong>7天无理由退换货</li>
+    </ul>
+</div>
+
+<h3>🔥 热门商品推荐：</h3>
+<div style="display: flex; justify-content: space-around; margin: 20px 0; flex-wrap: wrap;">
+    <div style="text-align: center; margin: 10px;">
+        <div style="width: 120px; height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; margin-bottom: 8px;">📱</div>
+        <p style="font-size: 14px; color: #4a5568;">数码产品</p>
+    </div>
+    <div style="text-align: center; margin: 10px;">
+        <div style="width: 120px; height: 120px; background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #8b4513; font-size: 24px; margin-bottom: 8px;">👕</div>
+        <p style="font-size: 14px; color: #4a5568;">时尚服饰</p>
+    </div>
+    <div style="text-align: center; margin: 10px;">
+        <div style="width: 120px; height: 120px; background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #2d3748; font-size: 24px; margin-bottom: 8px;">🏠</div>
+        <p style="font-size: 14px; color: #4a5568;">家居用品</p>
+    </div>
+</div>
+
+<h3>📱 关注我们：</h3>
+<div class="info-box">
+    <p>获取更多优惠信息和购物攻略：</p>
+    <ul style="margin-left: 20px;">
+        <li>📱 微信公众号：${siteName}官方</li>
+        <li>📺 抖音号：@${siteName}</li>
+        <li>🐦 微博：@${siteName}官方</li>
+    </ul>
+</div>
+
+<div class="warning-box">
+    <p><strong>💡 购物小贴士：</strong></p>
+    <ul style="margin-left: 20px;">
+        <li>完善个人资料，享受个性化推荐</li>
+        <li>关注心愿单，不错过心仪商品</li>
+        <li>参与积分活动，赚取更多优惠</li>
+        <li>邀请好友注册，获得推荐奖励</li>
+    </ul>
+</div>
+
+<p style="text-align: center; margin-top: 30px; font-size: 18px; color: #667eea;">
+    再次欢迎您的加入，祝您购物愉快！🛒✨
+</p>
+`;
+%>
+
+<%- include('base', { content: content, subject: '欢迎加入', siteName, siteUrl, supportEmail, currentYear, timestamp }) %>
