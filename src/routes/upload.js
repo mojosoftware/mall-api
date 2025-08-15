@@ -1,6 +1,7 @@
 const Router = require("@koa/router");
 const { upload, compressImage } = require("../middleware/upload");
 const authMiddleware = require("../middleware/auth");
+const { createRateLimiter } = require("../middleware/rateLimiter");
 const Response = require("../utils/response");
 
 const router = new Router();
@@ -9,6 +10,7 @@ const router = new Router();
 router.post(
   "/api/upload",
   authMiddleware,
+  createRateLimiter('upload'),
   upload.single("file"),
   compressImage,
   async (ctx) => {

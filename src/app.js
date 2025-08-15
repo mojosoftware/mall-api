@@ -7,7 +7,7 @@ const path = require("path");
 
 const logger = require("./utils/logger");
 const errorHandler = require("./middleware/errorHandler");
-const rateLimiter = require("./middleware/rateLimiter");
+const { createRateLimiter } = require("./middleware/rateLimiter");
 const userRoutes = require("./routes/user");
 const productRoutes = require("./routes/product");
 const categoryRoutes = require("./routes/category");
@@ -59,7 +59,7 @@ app.use(async (ctx, next) => {
 app.use(helmet());
 app.use(cors());
 app.use(bodyParser());
-app.use(rateLimiter({}));
+app.use(createRateLimiter('api'));
 app.use(static(path.join(__dirname, "../public")));
 app.use(errorHandler);
 
