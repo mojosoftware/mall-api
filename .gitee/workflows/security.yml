@@ -1,0 +1,78 @@
+name: 安全扫描
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # 每周一凌晨2点
+  workflow_dispatch:
+
+jobs:
+  dependency-scan:
+    name: 依赖安全扫描
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置Node.js环境
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: npm安全审计
+        run: npm audit --audit-level=moderate
+
+      - name: 检查过期依赖
+        run: npm outdated || true
+
+  docker-scan:
+    name: Docker镜像安全扫描
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 构建Docker镜像
+        run: docker build -t mall-api:latest .
+
+      - name: 镜像漏洞扫描
+        run: |
+          # 安装trivy
+          sudo apt-get update
+          sudo apt-get install wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy
+          
+          # 扫描镜像
+          trivy image --exit-code 1 --severity HIGH,CRITICAL mall-api:latest
+
+  code-quality:
+    name: 代码质量分析
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置Node.js环境
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 代码复杂度分析
+        run: |
+          npx jscpd src/ --threshold 10 --reporters console
+          
+      - name: 代码覆盖率检查
+        run: |
+          npm run test:coverage
+          # 检查覆盖率是否达到80%
+          npx nyc check-coverage --lines 80 --functions 80 --branches 80

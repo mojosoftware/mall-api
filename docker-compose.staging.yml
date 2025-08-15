@@ -1,0 +1,128 @@
+version: "3.8"
+
+services:
+  # MySQL数据库 - 测试环境
+  mysql:
+    image: mysql:8.0
+    container_name: mall_mysql_staging
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: staging123
+      MYSQL_DATABASE: mall_staging_db
+      MYSQL_USER: mall_staging_user
+      MYSQL_PASSWORD: staging123
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_staging_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pstaging123"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 40s
+    networks:
+      - mall_staging_network
+
+  # Redis缓存 - 测试环境
+  redis:
+    image: redis:7-alpine
+    container_name: mall_redis_staging
+    restart: always
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_staging_data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf --databases 16
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 3s
+      retries: 5
+      interval: 5s
+      start_period: 10s
+    networks:
+      - mall_staging_network
+
+  # 商城API服务 - 测试环境
+  api:
+    image: registry.cn-hangzhou.aliyuncs.com/mall-api:develop
+    container_name: mall_api_staging
+    restart: always
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=staging
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=staging123
+      - DB_NAME=mall_staging_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=1
+      - JWT_SECRET=staging-jwt-secret-key
+      - SITE_NAME=商城系统(测试)
+      - SITE_URL=https://staging.mall-api.com
+      - EMAIL_HOST=smtp.example.com
+      - EMAIL_PORT=465
+      - EMAIL_SECURE=true
+      - EMAIL_USER=
+      - EMAIL_PASS=
+      - EMAIL_FROM=noreply@staging.mall-api.com
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+      - ./public:/app/public
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      timeout: 10s
+      retries: 3
+      interval: 30s
+      start_period: 60s
+    networks:
+      - mall_staging_network
+
+  # Nginx反向代理 - 测试环境
+  nginx:
+    image: nginx:alpine
+    container_name: mall_nginx_staging
+    restart: always
+    ports:
+      - "8001:80"
+    volumes:
+      - ./docker/nginx/staging.conf:/etc/nginx/conf.d/default.conf
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./public:/var/www/html
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      timeout: 5s
+      retries: 3
+      interval: 30s
+    networks:
+      - mall_staging_network
+
+volumes:
+  mysql_staging_data:
+    driver: local
+  redis_staging_data:
+    driver: local
+
+networks:
+  mall_staging_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
