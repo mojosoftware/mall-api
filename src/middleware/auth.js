@@ -93,32 +93,3 @@ module.exports = async (ctx, next) => {
     }
   }
 };
-      return;
-    }
-
-    // 将用户信息挂载到ctx state中
-    ctx.state.user = user;
-    
-    // 记录访问日志（仅在开发环境）
-    if (process.env.NODE_ENV === 'development') {
-      logger.info(`用户访问: ${user.id} - ${ctx.method} ${ctx.url}`);
-    }
-
-    await next();
-  } catch (err) {
-    // 捕获所有可能的错误
-    if (err.name === 'JsonWebTokenError') {
-      logger.warn(`JWT格式错误: ${ctx.method} ${ctx.url} - ${err.message}`);
-      Response.error(ctx, '认证令牌格式错误', 401, 401);
-    } else if (err.name === 'TokenExpiredError') {
-      logger.warn(`JWT已过期: ${ctx.method} ${ctx.url} - ${err.message}`);
-      Response.error(ctx, '认证令牌已过期，请重新登录', 401, 401);
-    } else if (err.name === 'NotBeforeError') {
-      logger.warn(`JWT尚未生效: ${ctx.method} ${ctx.url} - ${err.message}`);
-      Response.error(ctx, '认证令牌尚未生效', 401, 401);
-    } else {
-      logger.error(`认证中间件错误: ${ctx.method} ${ctx.url}`, err);
-      Response.error(ctx, '认证过程中发生错误', 500, 500);
-    }
-  }
-}
