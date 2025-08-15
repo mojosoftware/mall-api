@@ -1,0 +1,11 @@
+#!/usr/bin/env node
+
+const path = require('path');
+const CodeGenerator = require('../src/cli/generator');
+
+// 设置工作目录为项目根目录
+process.chdir(path.resolve(__dirname, '..'));
+
+// 运行代码生成器
+const generator = new CodeGenerator();
+generator.generate().catch(console.error);

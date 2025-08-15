@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "generate": "node bin/generate",
+    "g": "npm run generate",
     "test": "jest",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
@@ -29,6 +31,9 @@
     "docker:status": "docker-compose ps",
     "docker:backup": "./scripts/deploy.sh backup",
     "docker:clean": "./scripts/deploy.sh clean"
+  },
+  "bin": {
+    "mall-generate": "./bin/generate"
   },
   "dependencies": {
     "@koa/multer": "^4.0.0",
